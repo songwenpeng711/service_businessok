@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.kingdee.songwp.businessok.mapper.DownloadMapper">
+	<resultMap type="SalePolicy" id="salePolicyMap">
+	   <id property="fID" column="sFID"/>
+	   <result property="fName" column="sFName"/>
+	   <result property="fSaleType" column="sFSaleType"/> 
+	   <result property="fSumQty" column="sFSumQty"/>
+	   <result property="fSumAmount" column="sFSumAmount"/>
+	   <result property="fStartDate" column="sFStartDate"/>
+	   <result property="fEndDate" column="sFEndDate"/>
+	   <result property="fSuit" column="sFSuit"/>
+	   <result property="fMultiple" column="sFMultiple"/>
+	   <result property="fLessSale" column="sFLessSale"/>
+	   <collection property="goodsList" ofType="SalePolicyGoods" column="s.FID">
+	      <id property="fEntryID" column="e1FEntryID"/>
+	      <result property="fID" column="e1FID"/>
+	      <result property="fSaleItem" column="e1FSaleItem"/>
+	      <result property="fSaleUnit" column="e1FSaleUnit"/>
+	      <result property="fSaleQty" column="e1FSaleQty"/>
+          <result property="fSalePrice" column="e1FSalePrice"/>      
+	      <result property="fSaleAmount" column="e1FSaleAmount"/>
+	   </collection>
+	   <collection property="proList" ofType="SalePolicyPro" column="s.FID">
+	      <id property="fEntryID" column="e2FEntryID"/>
+	      <result property="fID" column="e2FID"/>
+	      <result property="fProItem" column="e2FProItem"/>
+	      <result property="fProUnit" column="e2FProUnit"/>
+	      <result property="fProQty" column="e2FProQty"/>
+	      <result property="fProAmount" column="e2FProAmount"/>
+	   </collection>
+	</resultMap>
+	<sql id="t_base_select">select #{userID} as FUserID, t2.FItemID,t2.FName,t2.FNumber</sql>
+	<sql id="t_base_from">
+	  From (select  t1.FItemID,min(t1.FParentIDX) as FParentIDX,
+		(case when max(substring(t1.FdataAccessDelete,t0.FaccessUUID/8+1,1) &amp;
+		power(2,7-(t0.FaccessUUID+7)%8))>0 then 1 else 0 end) as
+		FDeleteAccess,
+		(case when max(substring(t1.FDataAccessEdit,t0.FaccessUUID/8+1,1) &amp;
+		power(2,7-(t0.FaccessUUID+7)%8))>0 then 1 else 0 end ) as FEditAccess,
+		(case when max(substring(t1.FDataAccessView,t0.FaccessUUID/8+1,1) &amp;
+		power(2,7-(t0.FaccessUUID+7)%8))>0 then 1 else 0 end) as FViewAccess
+		from t_user t0 inner join ${access_tableName} t1
+		on t0.FuserID=#{userID}
+		or t0.FUserID in (
+		select FGRoupID from t_group where FGroupID>0 and FUserID=#{userID} )
+		group by t1.FItemID
+		) t1 inner join
+		${tableName} t2 on t1.FItemID=t2.FItemID
+	</sql>
+	<sql id="t_base_where">where t1.FItemID>0 And t1.FViewAccess=1 And t2.FDeleted=0</sql>
+	<sql id="t_base_order">order by t2.FNumber</sql>
+	<!-- 查询职员信息 -->
+	<select id="getEmployees" resultType="Employee">
+		<include refid="t_base_select" ></include>,t2.FEmpGroup
+		<include refid="t_base_from">
+		   <property name="tableName" value="t_Base_Emp"/>
+		   <property name="access_tableName" value="Access_t_Emp"/>
+		</include>
+		<include refid="t_base_where"></include>
+		<include refid="t_base_order"></include>
+	</select>
+	<!-- 查询部门信息 -->
+	<select id="getDepartments" resultType="Department">
+	    <include refid="t_base_select" ></include>
+		<include refid="t_base_from">
+		   <property name="tableName" value="t_Department"/>
+		   <property name="access_tableName" value="Access_t_Department"/>
+		</include>
+		<include refid="t_base_where"></include>
+		<include refid="t_base_order"></include>
+	</select>
+	<!-- 查询客户信息 -->
+	<select id="getOrganizations" resultType="Organization">
+	    <include refid="t_base_select" ></include>,t2.FHelpCode,t2.FContact,t2.FAddress,t2.FPhone,t2.FMobilePhone,t2.FSaleID,t2.FTypeID
+		<include refid="t_base_from">
+		   <property name="tableName" value="t_Organization"/>
+		   <property name="access_tableName" value="Access_t_Organization"/>
+		</include>
+		<include refid="t_base_where"></include>
+		<include refid="t_base_order"></include>
+	</select>
+	<!-- 查询商品信息 -->
+	<select id="getGoods" resultType="Goods">
+	    <include refid="t_base_select" ></include>,t2.FBarCode,t2.Fmodel,t2.FUnitGroupID,t2.FUnitID,t2.FOrderUnitID,t2.FSaleUnitID,t2.FStoreUnitID,t2.FQtyDecimal,t2.FPriceDecimal,t2.fBatchManager,t2.fIsKFPeriod,t2.fKFPeriod
+		<include refid="t_base_from">
+		   <property name="tableName" value="t_ICItem"/>
+		   <property name="access_tableName" value="Access_t_ICItem"/>
+		</include>
+		<include refid="t_base_where"></include>
+		<include refid="t_base_order"></include>
+	</select>
+	<!-- 查询仓库信息 -->
+	<select id="getStocks" resultType="Stock">
+	    <include refid="t_base_select" ></include>,t2.FUnderStock,t2.FTypeID
+		<include refid="t_base_from">
+		   <property name="tableName" value="t_Stock"/>
+		   <property name="access_tableName" value="Access_t_Stock"/>
+		</include>
+		<include refid="t_base_where"></include> AND t2.FTypeID=500 
+		<include refid="t_base_order"></include>
+	</select>
+	<!-- 查询计量单位信息 -->
+	<select id="getUnits" resultType="MeasureUnit">
+	   select FMeasureUnitID,FNumber,m.FName fUnitName,g.FName fGroupName,FCoefficient,m.FUnitGroupID 
+	   from t_MeasureUnit m JOIN t_UnitGroup g ON m.FUnitGroupID = g.FUnitGroupID
+	</select>
+	<!-- 查询价格政策 -->
+	<select id="getPricePlys" resultType="PricePly">
+	   SELECT p.FInterID,FNumber,FName,FPri,FPlyType,FSysTypeID,FRelatedID,FBegDate,FEndDate,FItemID,FUnitID,FBegQty,FEndQty,Fprice
+       from ICPrcPly p JOIN ICPrcPlyEntry pe ON p.FInterID=pe.FInterID
+       WHERE pe.FChecked=1
+       ORDER BY p.FInterID,FPri
+	</select>
+	<!-- 查询促销政策 -->
+	<select id="getSalePlys" resultType="SalePly">
+	   SELECT s.FID,s.FName,FDate,FSaleType,FSumQty,FSumAmount,FStarDate,FEndDate,FSuit,FMultiple,e1.FIndex,FSaleItem,FSaleUnit,FSaleQty,FSaleAmount,FProItem,FProUnit,FProQty,FProAmount
+       from t_BOS200000002 s,t_BOS200000002Entry1 e1,t_BOS200000002Entry2 e2
+       WHERE s.FID = e1.FID and e1.FID = e2.FID 
+	</select>
+	<select id="getSalePolicys" resultMap="salePolicyMap">
+	   SELECT s.FID as sFID ,s.FName as sFName,s.FSaleType as sFSaleType, s.FLessSale as sFLessSale ,s.FSumQty as sFSumQty,s.FSumAmount as sFSumAmount,s.FStarDate as sFStartDate,s.FEndDate as sFEndDate,s.FSuit as sFSuit,s.FMultiple as sFMultiple ,e1.FEntryID as e1FEntryID,e1.FID as e1FID,e1.FSaleItem as e1FSaleItem, e1.FSalePrice as e1FSalePrice ,e1.FSaleUnit as e1FSaleUnit,e1.FSaleQty as e1FSaleQty,e1.FSaleAmount as e1FSaleAmount,e2.fEntryId as e2fEntryId,e2.FID as e2FID,e2.FProItem as e2FProItem,e2.FProUnit as e2FProUnit, e2.FProQty as e2FProQty,e2.FProAmount as e2FProAmount
+       from t_BOS200000002 s
+          Inner Join t_BOS200000002Entry1 e1 On s.FID = e1.FID
+          Left Join t_BOS200000002Entry2 e2 On e1.FID = e2.FID
+       WHERE convert(varchar(20),s.fEndDate,112) <![CDATA[ >= ]]> convert(varchar(20),getdate(),112) 
+	</select>
+	<!-- 成本对象 -->
+	<select id="getCostObjs" resultType="CostObj">
+	   SELECT fItemID, FNumber, FName
+	   FROM cbCostObj
+	</select>
+	
+	<!-- 页面设置参数 -->
+	<select id="getUIParameter" resultType="UIParameter">
+	   SELECT e2.*
+	   FROM t_BOS200000001Entry2 e2 join t_BOS200000001 e on e.fID = e2.fID
+	   WHERE e.fNumber = #{fNumber} OR e.fNumber = '90000'
+	   ORDER BY e.fNumber
+	</select>
+	<!-- 销售订单业务参数 -->
+	<select id="getSaleOrderParameter" resultType="SaleOrderParameter">
+	   SELECT e26.* 
+	   FROM t_BOS200000001Entry26 e26 join t_BOS200000001 e on e.fID = e26.fID
+	   WHERE e.fNumber = #{fNumber} OR e.fNumber = '90000'
+	   ORDER BY e.fNumber
+	</select>
+	<!-- 销售出库单参数 -->
+	<select id="getStockBillParameter" resultType="StockBillParameter">
+	   SELECT e27.*
+	   FROM t_BOS200000001Entry27 e27 join t_BOS200000001 e on e.fID = e27.fID
+	   WHERE e.fNumber = #{fNumber} OR e.fNumber = '90000'
+	   ORDER BY e.fNumber
+	</select>
+	<select id="getPickingMaterialParameter" resultType="PickingMaterialParameter">
+	   SELECT e32.*
+	   FROM t_BOS200000001Entry32 e32 join t_BOS200000001 e on e.fID = e32.fID
+	   WHERE e.fNumber = #{fNumber} OR e.fNumber = '90000'
+	   ORDER BY e.fNumber	  
+	</select>
+	<!-- 订单客户金额统计查询 -->
+	<select id="getSaleOrderStatic" resultType="SaleOrderStatic">
+	  SELECT orgID, orgName, orgAddress, count(distinct interID) nums, sum(amount) amount
+      FROM v_SaleOrder
+      WHERE CONVERT(varchar(100), FDate, 23) between #{startDate} and #{endDate} 
+            AND empID = #{empID}
+      GROUP BY orgID, orgAddress, orgName
+	</select>
+	<!-- 订单客户商品金额统计查询 -->
+	<select id="getSOrderGoodStatic" resultType="SOrderGoodStatic">
+	  SELECT orgID, icItemNumber, icItemName, sum(amount) amount
+	  from v_SaleOrder
+	  WHERE CONVERT(varchar(100), FDate, 23) between #{startDate} and #{endDate} 
+	  And EmpID = #{empID}
+	  And orgID in
+	     <foreach item="item" index="index" collection="orgIDList" open="(" separator="," close=")"> 
+           #{item}  
+         </foreach>  
+	  group by orgID, orgName, icItemNumber, icItemName
+	</select>
+	<!-- 获取库存信息 -->
+	<select id="getInventories" resultType="Inventory">
+	  SELECT 
+		icitem.FItemID,
+		icitem.FNumber,
+		icitem.FName,
+		unit.FMeasureUnitID AS FUnitID,
+        unit.FName AS FUnitName,
+		inv.FStockID,
+		stock.FNumber AS FSNumber,
+		stock.FName AS FSName,
+		(inv.FQty -IsNull(lockStock.FQty,0)) As FQty ,
+		inv.FBatchNo,
+		inv.FKFDate AS FSDate,
+		inv.FKFPeriod AS fPeriod,
+		 case inv.FKFDate when '' then null else  CONVERT(varchar(20), DateAdd(day,inv.FKFPeriod,inv.FKFDate), 23) end As FEDate
+	  FROM ICInventory inv
+		Inner Join t_Stock stock On inv.FStockID = stock.FItemID       
+		Inner Join t_ICItem icitem On inv.FItemID = icitem.FItemID
+		Inner Join t_MeasureUnit unit On icitem.FStoreUnitID = unit.FMeasureUnitID    
+		Left join t_LockStock lockStock On inv.FItemID =lockStock.FItemID And inv.FStockID =lockStock.FStockID And inv.FStockPlaceID =lockStock.FSPID And inv.FBatchNo = lockStock.FBatchNo 
+	  WHERE inv.FQty>0 
+	  <if test="fItemIDs != null">
+	    AND icitem.fItemID in <foreach collection="fItemIDs" item="fItemID" open="(" close=")" separator=",">#{fItemID}</foreach>
+	  </if>
+	  <if test="stockIDs != null">
+	    AND stock.fItemID in <foreach collection="stockIDs" item="stockID" open="(" close=")" separator=",">#{stockID}</foreach>
+	  </if>
+	  <!-- 
+	  <if test="fItemID != null">
+	    AND icitem.FItemID = #{fItemID}
+	  </if>
+	  <if test="stockID != null">
+	    AND stock.fItemID = #{stockID}
+	  </if>
+	   -->
+	  ORDER BY inv.FStockID,inv.FItemID,inv.FBatchNo
+	</select>
+	
+</mapper>

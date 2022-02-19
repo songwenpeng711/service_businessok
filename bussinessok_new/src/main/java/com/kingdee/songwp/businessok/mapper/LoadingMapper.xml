@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.kingdee.songwp.businessok.mapper.LoadingMapper">
+	<!-- 查询职员信息 -->
+	<select id="getEmployee" resultType="Employee">
+		SELECT e.fItemID,e.fNumber,e.fName,e.fEmpGroup,u.fUserID,u.fClientPwd
+        FROM t_Base_Emp e JOIN t_Base_User u ON e.FItemID = u.FEmpID
+        WHERE e.FNumber = #{fEmpNumber}
+        <if test="mobilePhone != null">and e.FMobilePhone = #{mobilePhone}</if>  
+        <if test="fClientPwd != null"> and u.FClientPwd = #{fClientPwd}</if>
+	</select>
+	<select id="isForbidden" resultType = "Integer">
+	   SELECT u.fForbidden
+	   FROM t_Base_User u
+	   WHERE u.fUserID = #{fUserID}
+	</select>
+	<update id="updatePassword" >
+	    UPDATE t_Base_User SET
+	    FClientPwd = #{password}
+	    WHERE FUserID = #{FUserID}
+	</update>
+</mapper>

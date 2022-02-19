@@ -1,0 +1,31 @@
+server:
+  port: 8989
+mybatis:
+  mapper-locations: classpath:com/kingdee/songwp/businessok/mapper/*.xml
+  typeAliasesPackage: com.kingdee.songwp.businessok.bean
+spring:
+  datasource:
+    username: sa
+    password: 64654177aA
+    url: jdbc:sqlserver://192.168.19.199:1433;DatabaseName=AIS20200707095752
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    druid:
+                  # 初始化大小，最小，最大
+      initial-size: 5
+      min-idle: 5
+      maxActive: 20
+                  # 配置获取连接等待超时的时间
+      maxWait: 60000
+                 # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+      timeBetweenEvictionRunsMillis: 60000
+                 # 配置一个连接在池中最小生存的时间，单位是毫秒
+      minEvictableIdleTimeMillis: 300000
+      validationQuery: SELECT 1 
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+                  # 打开PSCache，并且指定每个连接上PSCache的大小
+      poolPreparedStatements: true
+      maxPoolPreparedStatementPerConnectionSize: 20
+application:
+  private_key_path: F:/BaiduNetdiskDownload/keys/privateKey.key

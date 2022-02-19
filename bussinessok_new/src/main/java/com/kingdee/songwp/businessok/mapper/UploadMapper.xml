@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kingdee.songwp.businessok.mapper.UploadMapper">
+   <select id="getBillID" parameterType="map" statementType="CALLABLE">
+      EXEC GetICBillNoNew
+         @IsSave = 1, 
+         @FBillType = #{fBillType, jdbcType=INTEGER, mode=IN},
+         @BillID = #{billID, jdbcType=VARCHAR, mode=OUT} 
+   </select>
+   <select id="getICMaxNum" parameterType="map" statementType="CALLABLE">
+     EXEC GetICMaxNum
+        @TableName = #{tableName, jdbcType=VARCHAR, mode=IN},
+        @FInterID = #{fInterID, jdbcType=INTEGER, mode=OUT},
+        @Increment = default,
+        @UserID = #{userID, jdbcType=INTEGER, mode=IN}
+   </select>
+   <select id="getUpStockWhenSave" resultType="Integer">
+      Select FValue From t_systemprofile Where FCategory='IC' And FKey='UPSTOCKWHENSAVE'
+   </select>
+   <insert id="insertSaleOrder" parameterType="saleOrder">
+      insert into SEOrder(fBrNo,fInterID,fBillNo,fCurrencyID,fCustID,fDate,fSaleStyle,fDeptID,fEmpID,fBillerID,fTranType,fExchangeRate,fSettleDate,fAreaPS,fPrintCount,fHtPhoneNo,fExplanation)
+      values(#{fBarNo},#{fInterID},#{fBillNo},#{fCurrencyID},#{fCustID},#{fDate},#{fSaleStyle},#{fDeptID},#{fEmpID},#{fBillerID},#{fTranType},#{fExchangeRate},#{fSettleDate},#{fAreaPS},#{fPrintCount},#{fFHtPhoneNo},#{fExplanation})
+   </insert>
+   <insert id="insertSaleOrderEntry">
+      insert into SEOrderEntry(fBrNo,fInterID,fEntryID,fItemID,fQty,fPrice,fAmount,fTaxRate,
+               fTaxAmount,fNote,fDate,fUnitID,fAuxPrice,fAuxQty,fCESS,fAdviceConsignDate,fAllAmount,
+               fAllStdAmount,fAuxPriceDiscount,fPriceDiscount,fTaxAmt,fAuxTaxPrice,fTaxPrice,fSecCoefficient,fSecQty)
+      <foreach collection="entryList" item="entry" index="index" open="(" separator=" union all " close=")">
+       (select #{entry.fBrNo},#{entry.fInterID},#{entry.fEntryID},#{entry.fItemID},#{entry.fQty},#{entry.fPrice},#{entry.fAmount},#{entry.fTaxRate},
+               #{entry.fTaxAmount},#{entry.note},#{entry.fDate},#{entry.fUnitID},#{entry.fAuxPrice},#{entry.fAuxQty},#{entry.fCESS},#{entry.fAdviceConsignDate},#{entry.fAllAmount},
+               #{entry.fAllStdAmount},#{entry.fAuxPriceDiscount},#{entry.fPriceDiscount},#{entry.fTaxAmt},#{entry.fAuxTaxPrice},#{entry.fTaxPrice},#{entry.fSecCoefficient},#{entry.fSecQty})
+      </foreach>
+   </insert>
+   <insert id="insertStockBill" parameterType="stockBill">
+      insert into ICStockBill(fBrNo,fInterID,fTranType,fROB,fSaleStyle,fMarketingStyle,fSupplyID,fDate,fBillNo,fHtPhoneNo,fPOStyle,fPrintCount,fDCStockID,fDeptID,fEmpID,fBillerID,fUpStockWhenSave,fExplanation)
+      values(#{fBrNo},#{fInterID},#{fTranType},#{fROB},#{fSaleStyle},#{fMarketingStyle},#{fSupplyID},#{fDate},#{fBillNo},#{fFHtPhoneNo},#{fPOStyle},#{fPrintCount},#{fDCStockID},#{fDeptID},#{fEmpID},#{fBillerID},#{fUpStockWhenSave},#{fExplanation})
+   </insert>
+   
+   <insert id="insertStockBillEntry">
+      insert into ICStockBillEntry(fBrNo,fInterID,fEntryID,fItemID,fDCStockID,fUnitID,fAuxQty,
+               fQty,fAuxPrice,fAmount,fConsignPrice,fConsignAmount,fBatchNo,fPlanMode,fKFDate,fKFPeriod,fPeriodDate,fNote,fSecCoefficient,fSecQty)
+      <foreach collection="entryList" item="entry" index="index" open="(" separator=" union all " close=")">
+       (select #{entry.fBrNo},#{entry.fInterID},#{entry.fEntryID},#{entry.fItemID},#{entry.fDCStockID},#{entry.fUnitID},#{entry.fAuxQty},
+               #{entry.fQty},0,0,#{entry.fAuxPrice},#{entry.fAmount},#{entry.fBatchNo},#{entry.fPlanMode},
+               #{entry.fKFDate},#{entry.fKFPeroid},#{entry.fPeriodDate},#{entry.fNote},#{entry.fSecCoefficient},#{entry.fSecQty})
+      </foreach>
+   </insert>
+   
+   <update id="updateOrganization">
+       update t_organization set fName = #{FName}, fAddress= #{fAddress}, fContact=#{fContact}, fPhone=#{fPhone}
+       where FItemID = #{fItemID}
+   </update>
+   
+   <update id="updateOrgItem">
+       update t_item set fName = #{FName}
+       where FItemID = #{fItemID} and fItemClassID = 1
+   </update>
+   
+   <update id="updateInventory">
+      update ICInventory set fQty = fQty - #{fQty} where fItemID = #{fItemID} and fStockID = #{fDCStockID}
+       <if test="fBatchNo != null"> and fBatchNo = #{fBatchNo}</if>
+       
+   </update>
+   
+   <select id="getFSecCoefficient" resultType="Float">
+      select FSecCoefficient from t_icitem where fItemID = #{fItemID}
+   </select>
+</mapper>
